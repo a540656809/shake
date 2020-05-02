@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <title>摇一摇,祝福新郎和新娘</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="all">
+    <meta name="baiduspider" content="all">
+    <meta name="googlebot" content="all">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="css/liMarquee.css">
+    <link rel="stylesheet" href="css/animate.min.css">
+    <style type="text/css">
+        body{
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+            background:rgba(0,0,0,0);
+        }
+
+        .back-ground-pic-rank{
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background-position:center;
+            background-size:cover;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .back-ground-pic{
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-position:center;
+            background-size:cover;
+            width: 100%;
+            height: 100%;
+            z-index: 1999;
+        }
+        .mask-container{
+            position: fixed;
+            right: 0;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 2000;
+            display: flex;
+            justify-content: center; /* 水平居中 */
+            align-items: center;     /* 垂直居中 */
+            flex-direction: column;
+        }
+        .mask-input{
+            margin-bottom: 20px;
+            border-radius: 5px;
+            width: 80%;
+            height: 30px;
+            line-hight: 20px;
+            text-align:center;
+        }
+        .mask-button{
+            width: 15%;
+            border-radius: 15px;
+        }
+
+        .game-status{
+            text-align: center;
+            background-color: #ffffff;
+            padding: 5px 8px;
+            width: 30%;
+            border-radius: 5px;
+            color: #c1372f;
+            font-size: 4vw;
+        }
+        .game-status-box{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 8%;
+            padding: 0 10px;
+        }
+        .game-status-name{
+            color: #ffffff;
+            font-size: 6vw;
+        }
+        #app{
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .score-mine{
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+        .score-mine-content{
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 10px;
+            font-size: 6vw;
+            color: #ffffff;
+            align-self: flex-end;
+        }
+
+        .rank-list-box{
+            position: absolute;
+            height: 55%;
+            width: 90%;
+            bottom: 5%;
+            padding: 5% 5%;
+            z-index: 2001;
+        }
+        .rank-list-box1{
+            background-color: rgba(255,255,255,1);
+            opacity:0.22;
+            position: absolute;
+            width: 90%;
+            height: 93%;
+            border: 1px solid #ff3366;
+            z-index: 2001;
+        }
+        .rank-list-title{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 8vw;
+            width: 100%;
+            z-index: 2001;
+        }
+        .rank-list-title-text{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            border-bottom: 1px solid rgba(255,255,255,0.45);
+            color:rgba(255,255,255,1);
+        }
+        .rank-list-content{
+            display: flex;
+            color: #ffffff;
+            justify-content: space-between;
+            padding: 5px 10px;
+        }
+        .rank-list-content1{
+            height: 88%;
+            overflow:scroll;
+            position: relative;
+            z-index: 3000;
+        }
+        .rank-list-left{
+            display: flex;
+        }
+        .rank-list-left-top{
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 2px;
+            background-color: rgba(225,239,239,1);
+            color:rgba(239,0,0,1);
+            opacity: 1;
+        }
+        .rank-list-left-name{
+            color:rgba(255,255,255,1);
+            padding: 5px 10px;
+        }
+        .rank-list-right{
+            color:rgba(255,255,255,1);
+            padding: 5px 10px;
+        }
+        .hen-fu{
+            display: flex;
+            align-items: center;
+            background-color: rgba(255,255,255,1);
+            border:1px solid rgba(112,112,112,1);
+            opacity: 0.29;
+            width: 100%;
+            font-size: 7vw;
+        }
+
+    </style>
+
+    <script src="js/vue.min.js"></script>
+</head>
+<body onbeforeunload="goodbye()">
+<div id="app">
+    <div style="text-align: center;" v-show="'admin' === userName">
+        <button id="start" v-on:click="begin">开始</button>
+        <button id="stop" v-on:click="end">结束</button>
+        <button id="clear" v-on:click="clear">清理</button>
+    </div>
+
+    <img src="/img/bkground.png" class="back-ground-pic-rank" />
+
+    <div class="game-status-box">
+        <div class="game-status-name">{{userName}}</div>
+        <div class="game-status">
+            <div v-if="status===0">活动未开始</div><div v-if="status===1">活动进行中</div><div v-if="status===2">活动已结束</div>
+        </div>
+    </div>
+
+    <div class="hen-fu" id="hen-fu">
+        <a>兰舟昨日系，今朝结丝萝，一对神仙眷侣，两颗白首同心，金宵同温鸳鸯梦，来年双飞了重重，新婚同祝愿，百年好合同与共。</a>
+        <a>用彼此的深情画出一道美丽的彩虹，架起爱情的桥梁，不分你我，共尝甘苦，融入彼此的生命，敬祝你们百年好合，永结同心！</a>
+        <a>永不退色的是相互的关心，是无穷无尽深深的爱！爱情也因这一刻的融合而更温馨更美好！祝你们爆头偕老！</a>
+        <a>缘分的牵引，让两个人生的轨迹交错，编织出炫耀夺目爱的花纹！衷心的祝福你们：相互珍惜，同心永结！</a>
+        <a>堕入爱河是一份幸运，步入婚姻是一份幸福，这份幸运的幸福更是一份责任！祝福你们永远互敬互爱，甜美幸福！</a>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: center; padding-top: 5px;">
+        <img id="wobble-image" src="/img/shake1.png" style="width: 35%; height: 35%" />
+    </div>
+
+
+    <div class="rank-list-box" v-if="!show">
+        <div class="rank-list-box1">
+        </div>
+        <div class="rank-list-title">
+            <div class="rank-list-title-text">
+                祝福榜
+            </div>
+        </div>
+        <div class="rank-list-content1">
+            <div v-for="(item, index) in ranks" :key="index">
+                <div class="rank-list-content"  v-if="item[0] != 'admin'">
+                    <div class="rank-list-left">
+                        <div class="rank-list-left-top">TOP {{index + 1}}</div>
+                        <div class="rank-list-left-name">{{item[0]}}</div>
+                    </div>
+                    <div class="rank-list-right">{{item[1]}}</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="score-mine"  v-if="!show && userName != 'admin'">
+        <div class="score-mine-content">
+            <div class="score-mine-value">我的祝福值 : {{count}}</div>
+            <div class="score-mine-rank">排名 : {{myRank}}</div>
+        </div>
+    </div>
+
+    <template v-if="show">
+        <img src="/img/P003.png" class="back-ground-pic" />
+        <div class="mask-container">
+            <input class="mask-input" type="text" v-model="userName" placeholder="请输入您的姓名" >
+            <button class="mask-button" v-on:click="sure">确定</button>
+        </div>
+    </template>
+
+</div>
+
+
+<script src="js/socket.io/socket.io.js"></script>
+<script src="js/moment.min.js"></script>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script src="js/jquery.liMarquee.js"></script>
+<script src="js/vue.min.js"></script>
+
+<script type="text/javascript">
+    $(function(){
+        $('.hen-fu').liMarquee({
+            hoverstop: false
+        });
+
+        var henfu= document.getElementById("hen-fu");
+        henfu.style.height="6%";
+    });
+
+    // 是否正处于摇一摇期间
+    var isListening = false;
+    var name = "";
+    var cache = {
+        // 当加速度大于这个值时，才算一次；
+        maxLimit: 60,
+
+        // 当加速度小于该值时，才算一次；
+        minLimit: 40,
+
+        // 当前加速度的最大值，大于limit的时候，才计算，小于时，就不做计算；
+        curMax: 0,
+
+        // 触发几次，才算是得到了
+        multiple: 2,
+
+        // 触发加速度超过某一阈值的次数；
+        maxTime: 0,
+
+        // 摇一摇的次数 = Math.ceil(maxTime/multiple)
+        count: 0,
+
+        // 摇一摇开始的时间
+        beginTime: 0,
+
+        // 摇一摇结束的事件
+        endTime: 0,
+
+    };
+
+
+    var socket;
+    function socketConnect() {
+        socket =  io.connect('http://116.63.176.1:9092?name=' + vm.userName);
+        socket.on('connect', function() {
+        });
+
+        socket.on('chatevent', function(data) {
+            let map = new Map();
+            for (let key in data) {
+                map.set(key, data[key]);
+            }
+            var arrayObj=Array.from(map);
+            arrayObj.sort(function(a,b){return b[1]-a[1]});
+            for(var key in arrayObj){
+                if(vm.userName === arrayObj[key][0]){
+                    vm.count = arrayObj[key][1];
+                    cache.count = arrayObj[key][1];
+                    vm.myRank = ++key ;
+                }
+            }
+            vm.status = 1;
+            isListening = true;
+            vm.ranks = arrayObj;
+        });
+
+        socket.on('start', function(data) {
+            vm.status = 1;
+            isListening = true;
+        });
+
+        socket.on('end', function(data) {
+            vm.status = 2;
+            isListening = false;
+            cache.count = 0;
+        });
+
+        socket.on('clear', function(data) {
+            vm.status = 0;
+            isListening = false;
+            cache.count = 0;
+            cache.beginTime = 0;
+            cache.endTime = 0;
+            vm.count = 0;
+        });
+
+        socket.on('disconnect', function() {
+        });
+    }
+
+    window.οnbefοreunlοad=function(event){
+        /*执行其他程序*/
+        return undefined;
+    }
+    function goodbye() {
+        sendDisconnect();
+    }
+
+    function sendDisconnect() {
+        socket.disconnect();
+    }
+
+    function sendMessage(name ,data) {
+        socket.emit('chatevent', {userName: name, message: data});
+    }
+
+    function bg() {
+        $.ajax({
+            url : "/start",
+            type : "get",
+            success : function(r, request) {
+            },
+            fail : function (r, request) {
+                alert(r.msg);
+            }
+        });
+    }
+
+    function ed() {
+        $.ajax({
+            url : "/end",
+            type : "get",
+            success : function(r, request) {
+            },
+            fail : function (r, request) {
+                alert(r.msg);
+            }
+        });
+    }
+
+    function cr() {
+        $.ajax({
+            url : "/clear",
+            type : "get",
+            success : function(r, request) {
+            },
+            fail : function (r, request) {
+                alert(r.msg);
+            }
+        });
+    }
+
+    var vm = new Vue({
+        el: '#app',
+        data: {
+            status: 0,//0未开始 1进行中 2已结束
+            userName: "",
+            show: true,
+            count: cache.count,
+            ranks:[],
+            myRank: 0,
+        },
+        methods: {
+            sure() {
+                $.ajax({
+                    url : "/sure",
+                    type : "post",
+                    data : {
+                        'name' : this.userName
+                    },
+                    success : function(r, request) {
+                        if (r.code==0) {
+                            vm.show = !vm.show;
+                            name = vm.userName;
+                            socketConnect();
+                        }else{
+                            alert(r.msg);
+                        }
+                    }
+                });
+            },
+            begin(){
+                bg();
+            },
+            end(){
+                ed();
+            },
+            clear(){
+                cr();
+            },
+
+        }
+    });
+
+    window.addEventListener('devicemotion', function(event){
+        // 监听到摇晃了
+        // 获取含重力的加速度
+        var acceleration = event.acceleration;
+        var max = Math.abs(acceleration.x+acceleration.y+acceleration.z);
+
+        // 如果加速度大于阈值
+        if(max > cache.maxLimit){
+            cache.curMax = max;
+        } else if(cache.curMax && max < cache.minLimit){
+            // 如果当前的curMax大于阈值，说明在同一次加速状态，不做计算；
+            // 如果当前的curMax小于阈值，说明这是首次达到阈值的加速度
+            cache.curMax = 0;
+            cache.maxTime = cache.maxTime + 1;
+            let old = cache.count;
+            let nw = Math.ceil(cache.maxTime / cache.multiple)
+            //游戏结束也会那啥
+            if(nw > old){
+                this.sendMessage(name, cache.count);
+                wobbleAnimated();
+            }
+        }
+    }, false);
+
+
+    function wobbleAnimated() {
+        $('#wobble-image').removeClass().addClass('wobble animated').one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
+            $(this).removeClass();
+        });
+    };
+
+</script>
+
+</body>
+</html>

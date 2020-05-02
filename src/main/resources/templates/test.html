@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>签到</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
+    <link rel="stylesheet" href="/css/style1.css">
+</head>
+<body ontouchstart="">
+<div class="wxapi_container">
+    <div class="lbox_close wxapi_form">
+        <button id="getLocation">点我签到</button>
+    </div>
+</div>
+</body>
+<!--jq官方压缩源码-->
+<script src="js/jquery.min.js"></script>
+<script src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+<script>
+    $(function() {
+        // 初始化内容
+        var auth_final = getCookie('auth');
+        if (isEmpty(auth_final)) {
+            //initConfig();
+        }else{
+            //如果cookie不为空 则直接获取配置 如果配置过期则需要重初始化配置请求
+            $.ajax({
+                url : "/mp/sign/url",
+                type : "get",
+                data : {
+                    'url' : window.location.href
+                },
+                beforeSend: function(request) {
+                    request.setRequestHeader("Authorization",  getCookie('auth'));
+                },
+                success : function(r, request) {
+                    if (r.code==0) {
+                        wx.config({
+                            debug: false,
+                            appId: r.sign.appId,
+                            timestamp: r.sign.timestamp,
+                            nonceStr: r.sign.nonceStr,
+                            signature: r.sign.signature,
+                            jsApiList: [
+                                'checkJsApi',
+                                'openLocation',
+                                'getLocation'
+                            ]
+                        });
+                    }else{
+                        //如果失败了 则token过期  重新获取token
+                        initConfig();
+                    }
+                }
+            });
+        }
+
+    });
+
+    //初始化配置参数
+    function initConfig() {
+        $.ajax({
+            cache: false,
+            url : "/authorization",
+            type : "get",
+            data : {
+            },
+            success : function(r, request) {
+                if (r.code==200) {
+                    setCookie('auth', r.data.authorization);
+                    console.log('获取token成功');
+                    //token获取成功则登陆
+                    $.ajax({
+                        url : "/app/login",
+                        type : "post",
+                        data : {
+                            'code' : GetUrlParam('code')
+                        },
+                        beforeSend: function(request) {
+                            request.setRequestHeader("Authorization",  getCookie('auth'));
+                        },
+                        success : function(r, request) {
+                            //登陆成功则获取js-sdk配置
+                            console.log('登陆成功');
+                            if (r.code==0) {
+                                $.ajax({
+                                    url : "/mp/sign/url",
+                                    type : "get",
+                                    data : {
+                                        'url' : window.location.href
+                                    },
+                                    beforeSend: function(request) {
+                                        request.setRequestHeader("Authorization",  getCookie('auth'));
+                                    },
+                                    success : function(r) {
+                                        if (r.code==0) {
+                                            console.log('初始化配置成功');
+                                            wx.config({
+                                                debug: false,
+                                                appId: r.sign.appId,
+                                                timestamp: r.sign.timestamp,
+                                                nonceStr: r.sign.nonceStr,
+                                                signature: r.sign.signature,
+                                                jsApiList: [
+                                                    'checkJsApi',
+                                                    'openLocation',
+                                                    'getLocation'
+                                                ]
+                                            });
+                                        }else{
+                                            console.log('获取配置失败');
+                                            console.log(r.msg);
+                                        }
+                                    }
+                                });
+                            }else{
+                                console.log('获取登陆令牌失败');
+                                console.log(r.msg);
+                            }
+                        }
+                    });
+
+                }else{
+                    console.log('获取token失败');
+                    console.log(r.msg);
+                }
+            }
+        });
+    }
+
+
+    function GetUrlParam(paraName) {
+        var url = document.location.toString();
+        var arrObj = url.split("?");
+
+        if (arrObj.length > 1) {
+            var arrPara = arrObj[1].split("&");
+            var arr;
+
+            for (var i = 0; i < arrPara.length; i++) {
+                arr = arrPara[i].split("=");
+
+                if (arr != null && arr[0] == paraName) {
+                    return arr[1];
+                }
+            }
+            return "";
+        }
+        else {
+            return "";
+        }
+    }
+
+    function getCookie(name)
+    {
+        var arr,reg=new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+        if(arr=document.cookie.match(reg))
+            return unescape(arr[2]);
+        else
+            return null;
+    }
+
+    function setCookie(name,value)
+    {
+        var Days = 30;
+        var exp = new Date();
+        exp.setTime(exp.getTime() + Days*24*60*60*1000);
+        document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString();
+    }
+
+    function isEmpty(obj){
+        if(typeof obj == "undefined" || obj == null || obj == ""){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+</script>
+<script src="js/zepto.min.js"></script>
+<script src="js/localtion.js"> </script>
+
+<script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.14&key=c1a45bd10b89f8a7f0d2378fda9b73c0"></script>
+<script type="text/javascript">
+    // var map = new AMap.Map('container', {
+    //     resizeEnable: true
+    // });
+    AMap.plugin('AMap.Geolocation', function() {
+        var geolocation = new AMap.Geolocation({
+            enableHighAccuracy: true,//是否使用高精度定位，默认:true
+            timeout: 10000,          //超过10秒后停止定位，默认：5s
+            buttonPosition:'RB',    //定位按钮的停靠位置 右下角
+            buttonOffset: new AMap.Pixel(10, 20),//定位按钮与设置的停靠位置的偏移量，默认：Pixel(10, 20)
+            zoomToAccuracy: false,   //定位成功后是否自动调整地图视野到定位点
+        });
+        // map.addControl(geolocation);
+        geolocation.getCurrentPosition(function(status,result){
+            if(status=='complete'){
+                console.log(result.position);
+            }else{
+                console.log(result.message);
+            }
+        });
+    });
+</script>
+
+</html>

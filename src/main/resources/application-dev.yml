@@ -1,0 +1,38 @@
+wechat:
+  appid: wxdc0231a9f1b9e14d
+  secret: 8b5b3dcbc404e5de3288ca3048516270
+  token: kkjoe
+  aesKey:
+
+socket:
+  host: 0.0.0.0
+  port: 9092
+
+redis:
+  #  host: 192.168.1.175
+  host: 127.0.0.1
+  port: 6379
+  password: 123123
+
+
+logging:
+  level:
+    root: info
+    com.bootdo: debug
+spring:
+  redis:
+    host: localhost
+    port: 6379
+    password: 123123
+    # 连接超时时间（毫秒）
+    timeout: 10000
+    jedis:
+      pool:
+        # 连接池中的最大空闲连接
+        max-idle: 8
+        # 连接池中的最小空闲连接
+        min-idle: 10
+        # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 100
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
